@@ -24,6 +24,8 @@ if check_password():
     # Titel
     st.title("Drucklegung und Kalkulation geheftete Objekte V1")
 
+    st.subheader("Angaben Objekt")
+
     # Eingaben: Format und Seiten
     format_breite = st.number_input("Format Endprodukt horizontal (mm)", min_value=100, max_value=400, value=202)
     format_hoehe = st.number_input("Format Rohprodukt vertikal (mm)", min_value=100, max_value=400, value=275)
@@ -192,7 +194,7 @@ if check_password():
     # Zylinder passend und Delta
     df_zylinder["Zylinderumfang passend"] = df_zylinder["theor. Zylinderumfang"].apply(naechster_zylinder)
     df_zylinder["Zylinderumfang Delta"] = df_zylinder.apply(
-        lambda row: f"{int(row["Zylinderumfang passend"])-int(row["theor. Zylinderumfang"].replace(' mm',''))} mm" if row["Zylinderumfang passend"] != "-" else "-",
+        lambda row: f"{int(row['Zylinderumfang passend']) - int(row['theor. Zylinderumfang'].replace(' mm',''))} mm" if row["Zylinderumfang passend"] != "-" else "-",
         axis=1
     )
 
