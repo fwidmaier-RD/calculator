@@ -38,12 +38,6 @@ if check_password():
     else:
         beschnitt = 0.0
 
-    # Weitere produktspezifische Angaben
-    papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
-    papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
-    auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, value=500000)
-    papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
-
     # Berechnung Rohproduktwerte
     format1_roh = format_breite + beschnitt
     format2_roh = format_hoehe + 2 * beschnitt
@@ -119,16 +113,6 @@ if check_password():
     else:
         st.success("✅ Strangbreite Abschnitt vert ist gültig (195–400 mm).")
 
-    # Papierverbrauch Netto
-    st.subheader("📦 Papierverbrauch Netto")
-    flaeche_netto = (format1_roh / 1000) * (format2_roh / 1000) * lagen_roh
-    flaeche_auflage = flaeche_netto * auflage
-    gewicht_netto = flaeche_auflage * papiergewicht / 1000
-
-    st.write(f"Fläche Netto Rohprodukt (m²): **{flaeche_netto:,.2f}**")
-    st.write(f"Fläche Netto Auflage Rohprodukt (m²): **{flaeche_auflage:,.2f}**")
-    st.write(f"Gewicht Netto (t): **{gewicht_netto:,.2f}**")
-
     # Drucklegung Variantenprüfung
     def naechster_zylinder(theor_umfang):
         theor_wert = int(theor_umfang.replace(" mm", ""))
@@ -188,8 +172,26 @@ if check_password():
     # Kalkulation Varianten → Tabelle Zylinder
     st.subheader("📊 Kalkulation")
 
+    st.subheader("Eingaben für Kalkulation")
+
+    auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, value=500000, format="%d")
+    papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
+    papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
+    papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
+    maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
+
     # Nur gültige Varianten übernehmen
     df_zylinder = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
+
+    # Papierverbrauch Netto
+    st.subheader("📦 Papierverbrauch Netto")
+    flaeche_netto = (format1_roh / 1000) * (format2_roh / 1000) * lagen_roh
+    flaeche_auflage = flaeche_netto * auflage
+    gewicht_netto = flaeche_auflage * papiergewicht / 1000
+
+    st.write(f"Fläche Netto Rohprodukt (m²): **{flaeche_netto:,.2f}**")
+    st.write(f"Fläche Netto Auflage Rohprodukt (m²): **{flaeche_auflage:,.2f}**")
+    st.write(f"Gewicht Netto (t): **{gewicht_netto:,.2f}**")
 
     # Zylinder passend und Delta
     df_zylinder["Zylinderumfang passend"] = df_zylinder["theor. Zylinderumfang"].apply(naechster_zylinder)
