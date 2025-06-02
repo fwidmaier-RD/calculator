@@ -169,41 +169,40 @@ if check_password():
     st.subheader("🔍 Drucklegung – Variantenprüfung")
     st.table(df_varianten)
 
-    # Kalkulation Varianten → Tabelle Zylinder
+    # 📊 Kalkulation – Eingaben
     st.subheader("📊 Kalkulation")
 
-    st.subheader("Eingaben für Kalkulation")
-
+    # Eingaben für Kalkulation
     auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, value=500000, format="%d")
-    papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
     papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
-    maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
+    papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
+    maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=10.0)
 
     # Nur gültige Varianten übernehmen
-    df_zylinder = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
+    varianten_gueltig = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
 
-    # Papierverbrauch Netto
-    st.subheader("📦 Papierverbrauch Netto")
-    flaeche_netto = (format1_roh / 1000) * (format2_roh / 1000) * lagen_roh
-    flaeche_auflage = flaeche_netto * auflage
-    gewicht_netto = flaeche_auflage * papiergewicht / 1000
+    # Berechnung Zylinder und Delta
+    def finde_zylinder(theor):
+        theor_int = int(theor.replace(" mm", ""))
+        for z in [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]:
+            if z >= theor_int:
+                return z
+        return None
 
-    st.write(f"Fläche Netto Rohprodukt (m²): **{flaeche_netto:,.2f}**")
-    st.write(f"Fläche Netto Auflage Rohprodukt (m²): **{flaeche_auflage:,.2f}**")
-    st.write(f"Gewicht Netto (t): **{gewicht_netto:,.2f}**")
-
-    # Zylinder passend und Delta
-    df_zylinder["Zylinderumfang passend"] = df_zylinder["theor. Zylinderumfang"].apply(naechster_zylinder)
-    df_zylinder["Zylinderumfang Delta"] = df_zylinder.apply(
-        lambda row: f"{int(row['Zylinderumfang passend']) - int(row['theor. Zylinderumfang'].replace(' mm',''))} mm" if row["Zylinderumfang passend"] != "-" else "-",
+    varianten_gueltig["Zylinder"] = varianten_gueltig["theor. Zylinderumfang"].apply(finde_zylinder)
+    varianten_gueltig["Delta Rohprodukt / Zylinder"] = varianten_gueltig.apply(
+        lambda row: f"{row['Zylinder'] - int(row['theor. Zylinderumfang'].replace(' mm',''))} mm" if row['Zylinder'] is not None else "-",
         axis=1
     )
 
-    # Papier Rohprodukt
-    papier_roh_m2 = (format1_roh / 1000) * (format2_roh / 1000) * (auflage / 2)
-    df_zylinder["Papier Rohprodukt (m²)"] = f"{papier_roh_m2:,.2f} m²"
+    # Papier – Berechnungen vorbereiten
+    df_papier = pd.DataFrame()
+    df_papier["Variante"] = varianten_gueltig["Variante"]
+    df_papier["Bahnbreite (mm)"] = varianten_gueltig["Bahnbreite"]
+    df_papier["Zylinder (mm)"] = varianten_gueltig["Zylinder"]
+    df_papier["Delta Rohprodukt / Zylinder"] = varianten_gueltig["Delta Rohprodukt / Zylinder"]
 
-    st.table(
-        df_zylinder.set_index("Variante")
-    )
+    # Tabelle anzeigen
+    st.subheader("📄 Papier")
+    st.table(df_papier.set_index("Variante"))
