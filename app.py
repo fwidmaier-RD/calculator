@@ -172,26 +172,62 @@ if check_password():
     # 📊 Kalkulation – Eingaben
     st.subheader("📊 Kalkulation")
 
-    auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, value=500000, format="%d")
+    # Eingabefelder für Kalkulation
+    auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, format="%d", value=500000)
     papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
     papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
-    maschinenstunde = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
+    maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
 
-    # Nur gültige Varianten übernehmen
-    papier_varianten = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
+    # Liste gültiger Varianten extrahieren
+    gueltige_varianten = df_varianten[df_varianten["Status"] == "✅ Möglich"]
 
-    # Zylinder passend berechnen
-    papier_varianten["Zylinder"] = papier_varianten["theor. Zylinderumfang"].apply(naechster_zylinder)
+    # Hilfsfunktion zur Ermittlung des passenden Zylinders
+    def get_passender_zylinder(theor):
+        theor_int = int(theor.replace(" mm", ""))
+        for z in [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]:
+            if z >= theor_int:
+                return z
+        return None
 
-    # Delta berechnen
-    papier_varianten["Delta Rohprodukt / Zylinder"] = papier_varianten.apply(
-        lambda row: f"{int(row['Zylinder']) - int(row['theor. Zylinderumfang'].replace(' mm',''))} mm", axis=1
-    )
+    # Tabelle aufbauen
+    daten_papier = {
+        "Wert": []
+    }
 
-    # Relevante Spalten zusammenstellen für Transponierung
-    papier_tabelle = papier_varianten.set_index("Variante")[["Bahnbreite", "Zylinder", "Delta Rohprodukt / Zylinder"]].T
+    # Werte vorbereiten
+    parameter_namen = [
+        "Bahnbreite (mm)",
+        "Zylinder (mm)",
+        "Delta Rohprodukt/Zylinder (mm)",
+        "Papier Rohprodukt (t)"
+    ]
 
-    # Anzeige der transponierten Tabelle
-    st.subheader("📄 Papier")
-    st.table(papier_tabelle)
+    for param in parameter_namen:
+        daten_papier[param] = []
+
+    for index, row in gueltige_varianten.iterrows():
+        varname = row["Variante"]
+        daten_papier["Wert"].append(varname)
+
+        # Bahnbreite
+        bahnbreite = int(row["Bahnbreite"].replace(" mm", ""))
+        daten_papier["Bahnbreite (mm)"].append(f"{bahnbreite} mm")
+
+        # Zylinder (passend)
+        theor_zyl = row["theor. Zylinderumfang"]
+        passend = get_passender_zylinder(theor_zyl)
+        daten_papier["Zylinder (mm)"].append(f"{passend} mm")
+
+        # Delta
+        delta = passend - int(theor_zyl.replace(" mm", ""))
+        daten_papier["Delta Rohprodukt/Zylinder (mm)"].append(f"{delta} mm")
+
+        # Papier Rohprodukt (t)
+        papier_roh_t = (format1_roh / 1000) * (format2_roh / 1000) * (seiten / 2) * (papiergewicht / 1_000_000) * auflage
+        daten_papier["Papier Rohprodukt (t)"].append(f"{papier_roh_t:,.2f} t")
+
+    # Umwandlung und Anzeige als transponierte Tabelle
+    df_papier = pd.DataFrame(daten_papier)
+    df_papier = df_papier.set_index("Wert").T
+    st.table(df_papier)
