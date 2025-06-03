@@ -179,6 +179,22 @@ if check_password():
     papierqualitaet = st.text_input("Papierqualität (z.\u202fB. LWC, SC, UWF)", value="LWC")
     maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
 
+    # Auswahlfeld für Farbauftrag
+    farboption = st.selectbox(
+        "Farbauftrag",
+        options=["Gering", "Mittel", "Hoch"],
+        index=1,
+        help="Auswahl des Farbauftrags: Gering = 1,0 g/m², Mittel = 1,1 g/m², Hoch = 1,2 g/m²"
+    )
+
+    # Zuordnung des numerischen Werts
+    farbauftrag = {
+        "Gering": 1.0,
+        "Mittel": 1.1,
+        "Hoch": 1.2
+    }[farboption]
+
+
     # Nur gültige Varianten übernehmen
     df_gueltig = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
 
