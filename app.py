@@ -179,55 +179,56 @@ if check_password():
     papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
     maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
 
-    # Liste gültiger Varianten extrahieren
-    gueltige_varianten = df_varianten[df_varianten["Status"] == "✅ Möglich"]
+    # Nur gültige Varianten übernehmen
+    df_gueltig = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
 
-    # Hilfsfunktion zur Ermittlung des passenden Zylinders
-    def get_passender_zylinder(theor):
-        theor_int = int(theor.replace(" mm", ""))
-        for z in [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]:
-            if z >= theor_int:
+    # Liste der zulässigen Zylinderumfänge
+    zylinder_umfaenge = [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]
+
+    def naechster_zylinder(theor_umfang):
+        theor_wert = int(theor_umfang.replace(" mm", ""))
+        for z in zylinder_umfaenge:
+            if z >= theor_wert:
                 return z
-        return None
+        return "-"
 
-    # Tabelle aufbauen
-    daten_papier = {
-        "Wert": []
-    }
+    # Berechnungen für Tabelle Papier
+    df_gueltig["Bahnbreite (mm)"] = df_gueltig["Bahnbreite"]
+    df_gueltig["Zylinder (mm)"] = df_gueltig["theor. Zylinderumfang"].apply(naechster_zylinder)
+    df_gueltig["Delta Rohprodukt/Zylinder (mm)"] = df_gueltig.apply(
+        lambda row: f"{int(row['Zylinder (mm)']) - int(row['theor. Zylinderumfang'].replace(' mm',''))}" if row["Zylinder (mm)"] != "-" else "-",
+        axis=1
+    )
 
-    # Werte vorbereiten
-    parameter_namen = [
+    # Papier Rohprodukt (t)
+    papier_roh_t = (
+        (format1_roh / 1000)
+        * (format2_roh / 1000)
+        * (seiten / 2)
+        * (papiergewicht / 1_000_000)
+        * auflage
+    )
+    df_gueltig["Papier Rohprodukt (t)"] = f"{papier_roh_t:,.2f} t"
+
+    # Papier Netto (Zylinder) (t) vorbereiten
+    papier_netto_zylinder = {}
+    for var in df_gueltig["Variante"]:
+        bahnbreite = float(df_gueltig.loc[df_gueltig["Variante"] == var, "Bahnbreite (mm)"].values[0].replace(" mm", "")) / 1000
+        zylinder = float(df_gueltig.loc[df_gueltig["Variante"] == var, "Zylinder (mm)"].values[0]) / 1000
+        nutzen = int(df_varianten[df_varianten["Variante"] == var]["Nutzen"].values[0])
+        wert = bahnbreite * zylinder * (auflage / nutzen) * papiergewicht / 1_000_000
+        papier_netto_zylinder[var] = f"{wert:,.2f} t"
+
+    df_gueltig["Papier Netto (Zylinder) (t)"] = df_gueltig["Variante"].map(papier_netto_zylinder)
+
+    # Tabelle transponieren und anzeigen
+    papier_transponiert = df_gueltig.set_index("Variante")[[
         "Bahnbreite (mm)",
         "Zylinder (mm)",
         "Delta Rohprodukt/Zylinder (mm)",
-        "Papier Rohprodukt (t)"
-    ]
+        "Papier Rohprodukt (t)",
+        "Papier Netto (Zylinder) (t)"
+    ]].T
 
-    for param in parameter_namen:
-        daten_papier[param] = []
-
-    for index, row in gueltige_varianten.iterrows():
-        varname = row["Variante"]
-        daten_papier["Wert"].append(varname)
-
-        # Bahnbreite
-        bahnbreite = int(row["Bahnbreite"].replace(" mm", ""))
-        daten_papier["Bahnbreite (mm)"].append(f"{bahnbreite} mm")
-
-        # Zylinder (passend)
-        theor_zyl = row["theor. Zylinderumfang"]
-        passend = get_passender_zylinder(theor_zyl)
-        daten_papier["Zylinder (mm)"].append(f"{passend} mm")
-
-        # Delta
-        delta = passend - int(theor_zyl.replace(" mm", ""))
-        daten_papier["Delta Rohprodukt/Zylinder (mm)"].append(f"{delta} mm")
-
-        # Papier Rohprodukt (t)
-        papier_roh_t = (format1_roh / 1000) * (format2_roh / 1000) * (seiten / 2) * (papiergewicht / 1_000_000) * auflage
-        daten_papier["Papier Rohprodukt (t)"].append(f"{papier_roh_t:,.2f} t")
-
-    # Umwandlung und Anzeige als transponierte Tabelle
-    df_papier = pd.DataFrame(daten_papier)
-    df_papier = df_papier.set_index("Wert").T
-    st.table(df_papier)
+    st.markdown("#### 📄 Papier")
+    st.table(papier_transponiert)
