@@ -210,16 +210,31 @@ if check_password():
     )
     df_gueltig["Papier Rohprodukt (t)"] = f"{papier_roh_t:,.2f} t"
 
-    # Papier Netto (Zylinder) (t) vorbereiten
-    papier_netto_zylinder = {}
-    for var in df_gueltig["Variante"]:
-        bahnbreite = float(df_gueltig.loc[df_gueltig["Variante"] == var, "Bahnbreite (mm)"].values[0].replace(" mm", "")) / 1000
-        zylinder = float(df_gueltig.loc[df_gueltig["Variante"] == var, "Zylinder (mm)"].values[0]) / 1000
-        nutzen = int(df_varianten[df_varianten["Variante"] == var]["Nutzen"].values[0])
-        wert = bahnbreite * zylinder * (auflage / nutzen) * papiergewicht / 1_000_000
-        papier_netto_zylinder[var] = f"{wert:,.2f} t"
+    # Papier Netto (Zylinder) (t)
+    df_gueltig["Papier Netto (Zylinder) (t)"] = df_gueltig.apply(
+        lambda row: (
+            (float(row["Bahnbreite (mm)"].replace(" mm", "")) / 1000)
+            * (float(row["Zylinder (mm)"].replace(" mm", "")) / 1000)
+            * (float(auflage) / int(row["Nutzen"]))
+            * papiergewicht / 1_000_000
+        ),
+        axis=1
+    )
 
-    df_gueltig["Papier Netto (Zylinder) (t)"] = df_gueltig["Variante"].map(papier_netto_zylinder)
+    # Papier Zuschlag & Rüsten (t)
+    df_gueltig["Papier Zuschlag & Rüsten (t)"] = df_gueltig["Papier Netto (Zylinder) (t)"].apply(lambda x: 1 + (x * 0.05))
+
+    # Summe Papier Brutto (t)
+    df_gueltig["Summe Papier Brutto (t)"] = df_gueltig["Papier Netto (Zylinder) (t)"] + df_gueltig["Papier Zuschlag & Rüsten (t)"]
+
+    # Kosten Papier (€)
+    df_gueltig["Kosten Papier (€)"] = df_gueltig["Summe Papier Brutto (t)"] * papierpreis
+
+    # Formatierung
+    for col in ["Papier Netto (Zylinder) (t)", "Papier Zuschlag & Rüsten (t)", "Summe Papier Brutto (t)"]:
+        df_gueltig[col] = df_gueltig[col].map(lambda x: f"{x:,.2f} t")
+
+    df_gueltig["Kosten Papier (€)"] = df_gueltig["Kosten Papier (€)"].map(lambda x: f"{x:,.0f} €")
 
     # Tabelle transponieren und anzeigen
     papier_transponiert = df_gueltig.set_index("Variante")[[
@@ -227,7 +242,10 @@ if check_password():
         "Zylinder (mm)",
         "Delta Rohprodukt/Zylinder (mm)",
         "Papier Rohprodukt (t)",
-        "Papier Netto (Zylinder) (t)"
+        "Papier Netto (Zylinder) (t)",
+        "Papier Zuschlag & Rüsten (t)",
+        "Summe Papier Brutto (t)",
+        "Kosten Papier (€)"
     ]].T
 
     st.markdown("#### 📄 Papier")
