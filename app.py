@@ -172,13 +172,11 @@ if check_password():
     # 📊 Kalkulation – Eingaben
     st.subheader("\U0001F4CA Kalkulation")
 
-    # Aktualisierte Berechnung und Formatierung der Kalkulation "Papier"
-
     # Eingabefelder für Kalkulation
     auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, format="%d", value=500000)
     papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
-    papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
+    papierqualitaet = st.text_input("Papierqualität (z.\u202fB. LWC, SC, UWF)", value="LWC")
     maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
 
     # Nur gültige Varianten übernehmen
@@ -187,6 +185,7 @@ if check_password():
     # Liste der zulässigen Zylinderumfänge
     zylinder_umfaenge = [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]
 
+    # Funktion zur Ermittlung des passenden Zylinders
     def naechster_zylinder(theor_umfang):
         theor_wert = int(theor_umfang.replace(" mm", ""))
         for z in zylinder_umfaenge:
@@ -194,64 +193,37 @@ if check_password():
                 return z
         return "-"
 
-    # Berechnungen für Tabelle Papier
-    df_gueltig["Bahnbreite (mm)"] = df_gueltig["Bahnbreite"].str.replace(" mm", "").astype(int)
-    df_gueltig["Zylinder (mm)"] = df_gueltig["theor. Zylinderumfang"].apply(naechster_zylinder)
-    df_gueltig["Delta Rohprodukt/Zylinder (mm)"] = df_gueltig.apply(
-        lambda row: f"{int(row['Zylinder (mm)']) - int(row['theor. Zylinderumfang'].replace(' mm',''))}" if row["Zylinder (mm)"] != "-" else "-",
-        axis=1
-    )
+    # Berechnungen
+    papier_data = {}
 
-    # Papier Rohprodukt (t)
-    papier_roh_t = (
-        (format1_roh / 1000)
-        * (format2_roh / 1000)
-        * (seiten / 2)
-        * (papiergewicht / 1_000_000)
-        * auflage
-    )
-    df_gueltig["Papier Rohprodukt (t)"] = papier_roh_t
+    for index, row in df_gueltig.iterrows():
+        variante = row["Variante"]
+        bahnbreite = int(row["Bahnbreite"].replace(" mm", ""))
+        theor_zyl = int(row["theor. Zylinderumfang"].replace(" mm", ""))
+        nutzen = int(row["Nutzen"])
+        zylinder = naechster_zylinder(row["theor. Zylinderumfang"])
 
-    # Papier Netto (Zylinder) (t)
-    papier_netto_dict = {}
-    for idx, row in df_gueltig.iterrows():
-        bahnbreite = row["Bahnbreite (mm)"] / 1000
-        zylinder = row["Zylinder (mm)"] / 1000
-        nutzen = int(df_varianten[df_varianten["Variante"] == row["Variante"]]["Nutzen"].values[0])
-        wert = bahnbreite * zylinder * (auflage / nutzen) * papiergewicht / 1_000_000
-        papier_netto_dict[row["Variante"]] = wert
-    df_gueltig["Papier Netto (Zylinder) (t)"] = df_gueltig["Variante"].map(papier_netto_dict)
+        delta_zyl = zylinder - theor_zyl if isinstance(zylinder, int) else "-"
+        papier_roh = (format1_roh / 1000) * (format2_roh / 1000) * (seiten / 2) * (papiergewicht / 1_000_000) * auflage
+        papier_netto = (bahnbreite / 1000) * (zylinder / 1000) * (auflage / nutzen) * (papiergewicht / 1_000_000)
+        papier_zuschlag = papier_netto * 0.05 + 1
+        papier_summe = papier_netto + papier_zuschlag
+        kosten_papier = papier_summe * papierpreis
 
-    # Papier Zuschlag & Rüsten (t)
-    df_gueltig["Papier Zuschlag & Rüsten (t)"] = 1 + (df_gueltig["Papier Netto (Zylinder) (t)"] * 0.05)
+        papier_data[variante] = {
+            "Bahnbreite (mm)": f"{bahnbreite:,}".replace(",", "."),
+            "Zylinder (mm)": f"{zylinder:,}".replace(",", "."),
+            "Delta Rohprodukt/Zylinder (mm)": f"{delta_zyl:,}".replace(",", ".") if isinstance(delta_zyl, int) else "-",
+            "Papier Rohprodukt (t)": f"{papier_roh:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            "Papier Netto (Zylinder) (t)": f"{papier_netto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            "Papier Zuschlag & Rüsten (t)": f"{papier_zuschlag:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            "Summe Papier Brutto (t)": f"{papier_summe:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            "Kosten Papier (€)": f"{kosten_papier:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        }
 
-    # Summe Papier Brutto (t)
-    df_gueltig["Summe Papier Brutto (t)"] = df_gueltig["Papier Netto (Zylinder) (t)"] + df_gueltig["Papier Zuschlag & Rüsten (t)"]
-
-    # Kosten Papier (€)
-    df_gueltig["Kosten Papier (€)"] = df_gueltig["Summe Papier Brutto (t)"] * papierpreis
-
-    # Formatierung für Ausgabe
-    df_papier = df_gueltig.set_index("Variante")[[
-        "Bahnbreite (mm)",
-        "Zylinder (mm)",
-        "Delta Rohprodukt/Zylinder (mm)",
-        "Papier Rohprodukt (t)",
-        "Papier Netto (Zylinder) (t)",
-        "Papier Zuschlag & Rüsten (t)",
-        "Summe Papier Brutto (t)",
-        "Kosten Papier (€)"
-    ]].T
-
-    # Formatieren der Zahlenfelder
-    def format_col(val, einheit="t"):
-        try:
-            return f"{val:,.2f} {einheit}" if einheit else f"{val:,.2f}"
-        except:
-            return val
-
-    df_papier = df_papier.applymap(lambda x: format_col(x, "t") if "t" in str(x) else format_col(x, "") if isinstance(x, float) else x)
-
-    # Tabelle anzeigen
+    # Tabelle generieren und anzeigen
+    df_papier = pd.DataFrame(papier_data)
     st.markdown("#### 📄 Papier")
     st.table(df_papier)
+
+    
