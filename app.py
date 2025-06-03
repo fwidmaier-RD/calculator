@@ -172,37 +172,26 @@ if check_password():
     # 📊 Kalkulation – Eingaben
     st.subheader("📊 Kalkulation")
 
-    # Eingaben für Kalkulation
     auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, value=500000, format="%d")
     papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
     papierqualitaet = st.text_input("Papierqualität (z. B. LWC, SC, UWF)", value="LWC")
-    maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=10.0)
+    maschinenstunde = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
 
     # Nur gültige Varianten übernehmen
-    varianten_gueltig = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
+    papier_varianten = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
 
-    # Berechnung Zylinder und Delta
-    def finde_zylinder(theor):
-        theor_int = int(theor.replace(" mm", ""))
-        for z in [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]:
-            if z >= theor_int:
-                return z
-        return None
+    # Zylinder passend berechnen
+    papier_varianten["Zylinder"] = papier_varianten["theor. Zylinderumfang"].apply(naechster_zylinder)
 
-    varianten_gueltig["Zylinder"] = varianten_gueltig["theor. Zylinderumfang"].apply(finde_zylinder)
-    varianten_gueltig["Delta Rohprodukt / Zylinder"] = varianten_gueltig.apply(
-        lambda row: f"{row['Zylinder'] - int(row['theor. Zylinderumfang'].replace(' mm',''))} mm" if row['Zylinder'] is not None else "-",
-        axis=1
+    # Delta berechnen
+    papier_varianten["Delta Rohprodukt / Zylinder"] = papier_varianten.apply(
+        lambda row: f"{int(row['Zylinder']) - int(row['theor. Zylinderumfang'].replace(' mm',''))} mm", axis=1
     )
 
-    # Papier – Berechnungen vorbereiten
-    df_papier = pd.DataFrame()
-    df_papier["Variante"] = varianten_gueltig["Variante"]
-    df_papier["Bahnbreite (mm)"] = varianten_gueltig["Bahnbreite"]
-    df_papier["Zylinder (mm)"] = varianten_gueltig["Zylinder"]
-    df_papier["Delta Rohprodukt / Zylinder"] = varianten_gueltig["Delta Rohprodukt / Zylinder"]
+    # Relevante Spalten zusammenstellen für Transponierung
+    papier_tabelle = papier_varianten.set_index("Variante")[["Bahnbreite", "Zylinder", "Delta Rohprodukt / Zylinder"]].T
 
-    # Tabelle anzeigen
+    # Anzeige der transponierten Tabelle
     st.subheader("📄 Papier")
-    st.table(df_papier.set_index("Variante"))
+    st.table(papier_tabelle)
