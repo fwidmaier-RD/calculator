@@ -194,6 +194,8 @@ if check_password():
         "Hoch": 1.2
     }[farboption]
 
+    # Neues Eingabefeld: Preis Farbe (Euro/kg)
+    preis_farbe = st.number_input("Preis Farbe (€/kg)", min_value=0.0, value=3.0, step=0.1)
 
     # Nur gültige Varianten übernehmen
     df_gueltig = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
@@ -242,4 +244,24 @@ if check_password():
     st.markdown("#### 📄 Papier")
     st.table(df_papier)
 
-    
+    # Neue Tabelle: Farbe
+
+    # 1. Bedruckte Fläche (m²)
+    df_farbe = pd.DataFrame(index=["Bedruckte Fläche (m²)", "Farbverbrauch (kg)", "Kosten Farbe (€)"])
+
+    for variante in df_gueltig["Variante"]:
+        # Rohdaten berechnen
+        bedruckte_flaeche = (format1_roh / 1000) * (format2_roh / 1000) * seiten * auflage
+        farbverbrauch = (bedruckte_flaeche * farbauftrag) / 1000  # in kg
+        kosten_farbe = farbverbrauch * preis_farbe
+
+        # Formatierte Einträge mit deutschem Zahlensystem (Tausenderpunkt, Komma als Dezimalzeichen)
+        df_farbe[variante] = [
+            f"{bedruckte_flaeche:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " m²",
+            f"{farbverbrauch:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " kg",
+            f"{kosten_farbe:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €",
+        ]
+
+    # Anzeige
+    st.markdown("#### 🎨 Farbe")
+    st.table(df_farbe)
