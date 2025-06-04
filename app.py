@@ -1,39 +1,25 @@
 import streamlit as st
-import streamlit_authenticator as stauth
 import pandas as pd
 
-# --- User Setup ---
-names = ['Anna Müller']
-usernames = ['anna']
-passwords = ['leiste-mart-lohn-hortense']  # Klartext
+def check_password():
+    def password_entered():
+        if st.session_state["password"] == "leiste-mart-lohn-hortense":
+            st.session_state["authenticated"] = True
+        else:
+            st.session_state["authenticated"] = False
+            st.error("Falsches Passwort. Bitte erneut versuchen.")
 
-# Passwort-Hashes generieren (für die produktive Nutzung: vorab generieren und speichern!)
-hashed_passwords = stauth.Hasher(passwords).generate()
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
 
-authenticator = stauth.Authenticate(
-    names, usernames, hashed_passwords,
-    'rd_calculator_cookie', 'some_signature_key', cookie_expiry_days=1
-)
+    if not st.session_state["authenticated"]:
+        st.title("🔒 Zugang geschützt")
+        st.text_input("Bitte Passwort eingeben:", type="password", on_change=password_entered, key="password")
+        return False
+    else:
+        return True
 
-# --- Login ---
-name, authentication_status, username = authenticator.login('Login', 'main')
-
-if authentication_status:
-    authenticator.logout('Logout', 'sidebar')
-    st.sidebar.success(f"Angemeldet als {name}")
-    # Hier beginnt deine App:
-    
-    # Beispiel:
-    st.title("📄 RD-Kalkulator")
-    # Dein bisheriger Code hier...
-
-elif authentication_status is False:
-    st.error('Benutzername oder Passwort falsch.')
-
-elif authentication_status is None:
-    st.warning('Bitte Benutzername und Passwort eingeben.')
-
-if authentication_status:
+if check_password():
 
     # Titel
     st.title("Drucklegung und Kalkulation geheftete Objekte V1")
