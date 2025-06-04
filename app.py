@@ -178,6 +178,8 @@ if check_password():
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
     papierqualitaet = st.text_input("Papierqualität (z.\u202fB. LWC, SC, UWF)", value="LWC")
     maschinenpreis = st.number_input("Preis Maschinenstunde (€)", min_value=0.0, value=1000.0, step=50.0)
+    bahngeschwindigkeit = st.number_input("Bahngeschwindigkeit (km/h)", min_value=10.0, max_value=60.0, value=39.5, step=0.5)
+
 
     # Auswahlfeld für Farbauftrag
     farboption = st.selectbox(
@@ -265,3 +267,33 @@ if check_password():
     # Anzeige
     st.markdown("#### 🎨 Farbe")
     st.table(df_farbe)
+
+    # Neue Tabelle Maschine: Nur für gültige Varianten
+    maschinen_data = {}
+
+    for index, row in df_gueltig.iterrows():
+        variante = row["Variante"]
+        nutzen = int(row["Nutzen"])
+        zylinder = naechster_zylinder(row["theor. Zylinderumfang"])
+
+        # Berechnungen
+        umdrehungen = auflage / nutzen
+        geschwindigkeit = zylinder * 63.29113924
+        netto_stunden = umdrehungen / geschwindigkeit
+        ruestzeit = 3
+        brutto_stunden = netto_stunden + ruestzeit
+        kosten_maschine = brutto_stunden * maschinenpreis
+
+        maschinen_data[variante] = {
+            "Umdrehungen": f"{umdrehungen:,.0f}".replace(",", "."),
+            "Geschwindigkeit (u/h)": f"{geschwindigkeit:,.0f}".replace(",", "."),
+            "Maschinenstunden Netto": f"{netto_stunden:,.2f}".replace(",", "."),
+            "Rüsten, Einrichten": f"{ruestzeit:,.0f}".replace(",", "."),
+            "Maschinenstunden Brutto": f"{brutto_stunden:,.2f}".replace(",", "."),
+            "Kosten Maschine (€)": f"{kosten_maschine:,.2f}".replace(",", ".")
+        }
+
+    # Tabelle anzeigen
+    st.markdown("#### 💡 Maschine")
+    df_maschine = pd.DataFrame(maschinen_data)
+    st.table(df_maschine)
