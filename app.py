@@ -278,19 +278,19 @@ if check_password():
 
         # Berechnungen
         umdrehungen = auflage / nutzen
-        geschwindigkeit = zylinder * 63.29113924
-        netto_stunden = umdrehungen / geschwindigkeit
-        ruestzeit = 3
-        brutto_stunden = netto_stunden + ruestzeit
-        kosten_maschine = brutto_stunden * maschinenpreis
+        geschwindigkeit = (bahngeschwindigkeit * 1_000_000) / zylinder
+        maschinenstunden_netto = umdrehungen / geschwindigkeit
+        ruesten = 3
+        maschinenstunden_brutto = maschinenstunden_netto + ruesten
+        kosten_maschine = maschinenstunden_brutto * maschinenpreis
 
         maschinen_data[variante] = {
             "Umdrehungen": f"{umdrehungen:,.0f}".replace(",", "."),
             "Geschwindigkeit (u/h)": f"{geschwindigkeit:,.0f}".replace(",", "."),
-            "Maschinenstunden Netto": f"{netto_stunden:,.2f}".replace(",", "."),
-            "Rüsten, Einrichten": f"{ruestzeit:,.0f}".replace(",", "."),
-            "Maschinenstunden Brutto": f"{brutto_stunden:,.2f}".replace(",", "."),
-            "Kosten Maschine (€)": f"{kosten_maschine:,.2f}".replace(",", ".")
+            "Maschinenstunden Netto": f"{maschinenstunden_netto:,.2f}".replace(",", "."),
+            "Rüsten, Einrichten": f"{ruesten}",
+            "Maschinenstunden Brutto": f"{maschinenstunden_brutto:,.2f}".replace(",", "."),
+            "Kosten Maschine (€)": f"{kosten_maschine:,.2f}".replace(",", ".").replace(".", ",", 1)
         }
 
     # Tabelle anzeigen
