@@ -213,7 +213,8 @@ if check_password():
                 return z
         return "-"
 
-    # Berechnungen
+
+    # Tabelle Papier
     papier_data = {}
 
     for index, row in df_gueltig.iterrows():
@@ -287,13 +288,48 @@ if check_password():
         maschinen_data[variante] = {
             "Umdrehungen": f"{umdrehungen:,.0f}".replace(",", "."),
             "Geschwindigkeit (u/h)": f"{geschwindigkeit:,.0f}".replace(",", "."),
-            "Maschinenstunden Netto": f"{maschinenstunden_netto:,.2f}".replace(",", "."),
+            "Maschinenstunden Netto": f"{maschinenstunden_netto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
             "Rüsten, Einrichten": f"{ruesten}",
-            "Maschinenstunden Brutto": f"{maschinenstunden_brutto:,.2f}".replace(",", "."),
-            "Kosten Maschine (€)": f"{kosten_maschine:,.2f}".replace(",", ".").replace(".", ",", 1)
+            "Maschinenstunden Brutto": f"{maschinenstunden_brutto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            "Kosten Maschine (€)": f"{kosten_maschine:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         }
 
     # Tabelle anzeigen
     st.markdown("#### 💡 Maschine")
     df_maschine = pd.DataFrame(maschinen_data)
     st.table(df_maschine)
+
+    # Neue Tabelle "Kosten"
+    kosten_data = {}
+
+    try:
+        for variante in df_gueltig["Variante"]:
+            # Werte aus den Tabellen abrufen und korrekt formatieren (Euro-Zeichen und Leerzeichen entfernen)
+            kosten_papier_str = df_papier.at["Kosten Papier (€)", variante].replace(".", "").replace(",", ".").replace(" €", "")
+            kosten_farbe_str = df_farbe.at["Kosten Farbe (€)", variante].replace(".", "").replace(",", ".").replace(" €", "")
+            kosten_maschine_str = df_maschine.at["Kosten Maschine (€)", variante].replace(".", "").replace(",", ".").replace(" €", "")
+
+            # Umwandlung in float
+            kosten_papier = float(kosten_papier_str)
+            kosten_farbe = float(kosten_farbe_str)
+            kosten_maschine = float(kosten_maschine_str)
+
+            # Gesamtkosten berechnen
+            kosten_gesamt = kosten_papier + kosten_farbe + kosten_maschine
+            kosten_pro_tausend = kosten_gesamt / (auflage / 1000)
+            kosten_pro_stueck = kosten_gesamt / auflage
+
+            kosten_data[variante] = {
+                "Kosten gesamt (€)": f"{kosten_gesamt:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                "Kosten / 1.000 (€)": f"{kosten_pro_tausend:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                "Kosten / Stück (€)": f"{kosten_pro_stueck:,.4f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            }
+    except Exception as e:
+        st.error("Fehler bei der Berechnung der Gesamtkosten.")
+        st.write(e)
+
+    # Falls erfolgreich, als DataFrame anzeigen
+    if kosten_data:
+        df_kosten = pd.DataFrame(kosten_data)
+        st.markdown("#### € Kosten")
+        st.table(df_kosten)
