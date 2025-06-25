@@ -54,8 +54,9 @@ if check_password():
             format2_roh
         ]
     })
-    for i, v in enumerate(daten_rohprodukt["Wert"]):
-        daten_rohprodukt.at[i, "Wert"] = f"{v:.0f}" if v == int(v) else f"{v:.2f}"
+    daten_rohprodukt["Wert"] = daten_rohprodukt["Wert"].apply(
+    lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
+    ).astype(str)
 
     st.subheader("📄 Rohprodukt")
     st.table(daten_rohprodukt)
@@ -80,8 +81,10 @@ if check_password():
             strangbreite_abschnitt
         ]
     })
-    for i, v in enumerate(daten_abschnitt["Wert"]):
-        daten_abschnitt.at[i, "Wert"] = f"{v:.0f}" if v == int(v) else f"{v:.2f}"
+    daten_abschnitt["Wert"] = daten_abschnitt["Wert"].apply(
+    lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
+    ).astype(str)
+
 
     st.subheader("📐 Abschnitt")
     st.table(daten_abschnitt)
