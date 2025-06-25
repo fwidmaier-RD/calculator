@@ -133,7 +133,9 @@ if check_password():
         st.warning("❌ Da der Abschnitt nicht valide ist, lässt sich dieses Objekt nicht produzieren. \n\n👉 Bitte passe Deine Angaben an!")
         st.stop()
 
-    # Drucklegung Variantenprüfung
+    # Drucklegung – Variantenprüfung
+    st.subheader("🔍 Drucklegung – Variantenprüfung")
+
     def naechster_zylinder(theor_umfang):
         theor_wert = int(theor_umfang.replace(" mm", ""))
         for z in [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]:
@@ -141,6 +143,7 @@ if check_password():
                 return z
         return "-"
 
+    # Variantenbeschreibung: (Name, Sammelteiler, Umbruch, Nutzen)
     varianten_info = [
         ("4U ohne Sammeln", 1, 2, 2),
         ("4U mit Sammeln", 2, 2, 1),
@@ -183,11 +186,31 @@ if check_password():
         except:
             continue
 
+    # Seitenzahl-Validierung nach Variante
+    seiten_modulo_regeln = {
+        "4U ohne Sammeln": 4,
+        "4U mit Sammeln": 8,
+        "6U ohne Sammeln": 4,
+        "6U mit Sammeln": 12,
+        "8U ohne Sammeln": 4,
+        "8U mit 1× Sammeln": 8,
+        "8U mit 2× Sammeln": 16,
+    }
+
+    # Nachträgliche Validierung der Seitenzahl
+    for v in varianten:
+        regel = seiten_modulo_regeln.get(v["Variante"])
+        if regel and seiten % regel != 0:
+            if v["Status"] == "✅ Möglich":
+                v["Status"] = "❌ Nicht möglich"
+                v["Grund"] = f"Seitenzahl nicht durch {regel} teilbar"
+
+    # Tabelle anzeigen
+    st.markdown("#### 🔍 Drucklegung – Variantenprüfung")
     df_varianten = pd.DataFrame(varianten)
     df_varianten = df_varianten[["Variante", "Nutzen", "Stränge", "theor. Zylinderumfang", "Bahnbreite", "Status", "Grund"]]
-
-    st.subheader("🔍 Drucklegung – Variantenprüfung")
     st.table(df_varianten)
+
 
     # 📊 Kalkulation – Eingaben
     st.subheader("\U0001F4CA Kalkulation")
