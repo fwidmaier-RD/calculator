@@ -88,6 +88,10 @@ if check_password():
 
     # Validierung Abschnitt
     st.subheader("✅ Validierung der Abschnittswerte")
+
+    abschnitt_valide = True
+
+    # Validierung Erforderliche Stränge
     if 2 <= stranganzahl <= 10:
         st.success("✅ Erforderliche Stränge liegen im zulässigen Bereich (2–10).")
     elif stranganzahl > 10:
@@ -96,22 +100,35 @@ if check_password():
                 st.success("✅ Erforderliche Stränge > 10 sind zulässig (Teilbarkeit durch 2 oder 3 und ≤ 40).")
             else:
                 st.error("❌ Erforderliche Stränge überschreiten das Maximum von 40.")
+                abschnitt_valide = False
         else:
             st.error("❌ Erforderliche Stränge > 10 müssen durch 2 oder 3 teilbar sein.")
+            abschnitt_valide = False
     else:
         st.error("❌ Erforderliche Stränge müssen mindestens 2 betragen.")
+        abschnitt_valide = False
 
+    # Validierung Bahnlänge
     if bahnbreite_abschnitt < 300:
         st.error("❌ Bahnlänge Abschnitt hor ist zu kurz. Mindestwert: 300 mm.")
+        abschnitt_valide = False
     else:
         st.success("✅ Bahnlänge Abschnitt hor ist gültig (≥ 300 mm).")
 
+    # Validierung Strangbreite
     if strangbreite_abschnitt < 195:
         st.error("❌ Strangbreite Abschnitt vert ist zu schmal. Mindestwert: 195 mm.")
+        abschnitt_valide = False
     elif strangbreite_abschnitt > 400:
         st.error("❌ Strangbreite Abschnitt vert ist zu breit. Maximalwert: 400 mm.")
+        abschnitt_valide = False
     else:
         st.success("✅ Strangbreite Abschnitt vert ist gültig (195–400 mm).")
+
+    # Abbruch bei ungültigem Abschnitt
+    if not abschnitt_valide:
+        st.warning("❌ Da der Abschnitt nicht valide ist, lässt sich dieses Objekt nicht produzieren. \n\n👉 Bitte passe Deine Angaben an!")
+        st.stop()
 
     # Drucklegung Variantenprüfung
     def naechster_zylinder(theor_umfang):
