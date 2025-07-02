@@ -93,6 +93,7 @@ if check_password():
     st.subheader("✅ Validierung der Abschnittswerte")
 
     abschnitt_valide = True
+    hinweis_doppelstrang = False
 
     # Validierung Erforderliche Stränge
     if 2 <= stranganzahl <= 10:
@@ -110,6 +111,25 @@ if check_password():
     else:
         st.error("❌ Erforderliche Stränge müssen mindestens 2 betragen.")
         abschnitt_valide = False
+
+    # Zusätzliche Validierung für Doppelstrang-Produktion
+    if ((11 <= stranganzahl <= 16) or
+        (22 <= stranganzahl <= 64 and
+        any(stranganzahl == faktor * anzahl
+            for faktor in [2, 3, 4] for anzahl in range(11, 17)))):
+        hinweis_doppelstrang = True
+
+    if hinweis_doppelstrang:
+        st.info("✅ Doppelstrang-Produktion möglich.")
+
+    else:
+        if stranganzahl < 11:
+            st.error("❌ Doppelstrang-Produktion nicht möglich (Weniger als 10 Stränge).")
+        elif 22 <= stranganzahl <= 64:
+            st.error("❌ Doppelstrang-Produktion nicht möglich (Ungültige Anzahl Stränge).")
+        elif stranganzahl > 64:
+            st.error("❌ Doppelstrang-Produktion nicht möglich (Mehr als 64 Stränge).")
+
 
     # Validierung Bahnlänge
     if bahnbreite_abschnitt < 300:
