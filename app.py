@@ -153,83 +153,83 @@ if check_password():
         st.warning("❌ Da der Abschnitt nicht valide ist, lässt sich dieses Objekt nicht produzieren. \n\n👉 Bitte passe Deine Angaben an!")
         st.stop()
 
-    # Drucklegung – Variantenprüfung
-    st.subheader("🔍 Drucklegung – Variantenprüfung")
 
-    def naechster_zylinder(theor_umfang):
-        theor_wert = int(theor_umfang.replace(" mm", ""))
-        for z in [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]:
-            if z >= theor_wert:
-                return z
-        return "-"
+    # Drucklegung Variantenprüfung
 
-    # Variantenbeschreibung: (Name, Sammelteiler, Umbruch, Nutzen)
+    # Vorbereitung: Definition aller Standardvarianten
     varianten_info = [
-        ("4U ohne Sammeln", 1, 2, 2),
-        ("4U mit Sammeln", 2, 2, 1),
-        ("6U ohne Sammeln", 1, 3, 3),
-        ("6U mit Sammeln", 3, 3, 1),
-        ("8U ohne Sammeln", 1, 4, 4),
-        ("8U mit 1× Sammeln", 2, 4, 2),
-        ("8U mit 2× Sammeln", 4, 4, 1),
+        ("4U ohne Sammeln", 1, 2, 2, 4),
+        ("4U mit Sammeln", 2, 2, 1, 8),
+        ("6U ohne Sammeln", 1, 3, 3, 4),
+        ("6U mit Sammeln", 3, 3, 1, 12),
+        ("8U ohne Sammeln", 1, 4, 4, 4),
+        ("8U mit 1× Sammeln", 2, 4, 2, 8),
+        ("8U mit 2× Sammeln", 4, 4, 1, 16)
     ]
 
     varianten = []
-    for name, sammelteiler, umbruch, nutzen in varianten_info:
-        try:
-            anzahl_strang = stranganzahl / sammelteiler
-            zylinder = umbruch * bahnbreite_abschnitt
-            bahnbreite = anzahl_strang * strangbreite_abschnitt
 
-            status = "✅ Möglich"
-            grund = ""
+    # Schleife für Standard- und Doppelstrangvarianten
+    testwerte = [11, 12, 13, 14, 15, 16]
 
-            if anzahl_strang > 10:
-                status = "❌ Nicht möglich"
-                grund = "Mehr als 10 Stränge"
-            elif zylinder < 790 or zylinder > 1530:
-                status = "❌ Nicht möglich"
-                grund = "Zylinderumfang nicht im zulässigen Bereich"
-            elif bahnbreite < 800 or bahnbreite > 2670:
-                status = "❌ Nicht möglich"
-                grund = "Bahnbreite nicht im zulässigen Bereich"
+    for name, sammelteiler, umbruch, nutzen, seitenregel in varianten_info:
+        for ist_doppelstrang in [False, True]:
+            variant_name = f"{name} (Doppelstrang)" if ist_doppelstrang else name
+            faktor = 2 if ist_doppelstrang else 1
 
-            varianten.append({
-                "Variante": name,
-                "Nutzen": nutzen,
-                "Stränge": int(anzahl_strang),
-                "theor. Zylinderumfang": f"{int(zylinder)} mm",
-                "Bahnbreite": f"{int(bahnbreite)} mm",
-                "Status": status,
-                "Grund": grund
-            })
-        except:
-            continue
+            try:
+                anzahl_strang = (stranganzahl / sammelteiler) / faktor
+                zylinder = umbruch * bahnbreite_abschnitt
+                bahnbreite = anzahl_strang * strangbreite_abschnitt * faktor
 
-    # Seitenzahl-Validierung nach Variante
-    seiten_modulo_regeln = {
-        "4U ohne Sammeln": 4,
-        "4U mit Sammeln": 8,
-        "6U ohne Sammeln": 4,
-        "6U mit Sammeln": 12,
-        "8U ohne Sammeln": 4,
-        "8U mit 1× Sammeln": 8,
-        "8U mit 2× Sammeln": 16,
-    }
+                status = "✅ Möglich"
+                grund = ""
 
-    # Nachträgliche Validierung der Seitenzahl
-    for v in varianten:
-        regel = seiten_modulo_regeln.get(v["Variante"])
-        if regel and seiten % regel != 0:
-            if v["Status"] == "✅ Möglich":
-                v["Status"] = "❌ Nicht möglich"
-                v["Grund"] = f"Seitenzahl nicht durch {regel} teilbar"
+                # Regel für maximale Stranganzahl je nach Variante
+                if ist_doppelstrang:
+                    if anzahl_strang > 16:
+                        status = "❌ Nicht möglich"
+                        grund = "Mehr als 16 Stränge (Doppelstrang)"
+                else:
+                    if anzahl_strang > 10:
+                        status = "❌ Nicht möglich"
+                        grund = "Mehr als 10 Stränge"
 
-    # Tabelle anzeigen
-    st.markdown("#### 🔍 Drucklegung – Variantenprüfung")
+                # Prüfung Zylinderumfang
+                if zylinder < 790 or zylinder > 1530:
+                    status = "❌ Nicht möglich"
+                    grund = "Zylinderumfang nicht im zulässigen Bereich"
+
+                # Prüfung Bahnbreite
+                elif bahnbreite < 800 or bahnbreite > 2670:
+                    status = "❌ Nicht möglich"
+                    grund = "Bahnbreite nicht im zulässigen Bereich"
+
+                # Prüfung Seitenregel
+                if seiten % seitenregel != 0:
+                    status = "❌ Nicht möglich"
+                    grund = f"Seitenanzahl nicht durch {seitenregel} teilbar"
+
+                varianten.append({
+                    "Variante": variant_name,
+                    "Nutzen": nutzen * faktor,
+                    "Stränge": int(anzahl_strang),
+                    "theor. Zylinderumfang": f"{int(zylinder)} mm",
+                    "Bahnbreite": f"{int(bahnbreite)} mm",
+                    "Status": status,
+                    "Grund": grund
+                })
+
+            except:
+                continue
+
+    # In DataFrame umwandeln und anzeigen
     df_varianten = pd.DataFrame(varianten)
     df_varianten = df_varianten[["Variante", "Nutzen", "Stränge", "theor. Zylinderumfang", "Bahnbreite", "Status", "Grund"]]
+
+    st.subheader("🔍 Drucklegung – Variantenprüfung")
     st.table(df_varianten)
+
 
 
     # 📊 Kalkulation – Eingaben
