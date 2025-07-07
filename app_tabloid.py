@@ -24,12 +24,32 @@ if check_password():
     # Titel
     st.title("Drucklegung und Kalkulation Tabloid Produktion V1")
 
-    st.subheader("Angaben Objekt")
+    # 🧾 Angaben Objekt
+    st.subheader("📄 Angaben Objekt")
 
-    # Eingaben: Format und Seiten
-    format_breite = st.number_input("Format Endprodukt horizontal (mm)", min_value=100, max_value=400, value=202)
-    format_hoehe = st.number_input("Format Rohprodukt vertikal (mm)", min_value=100, max_value=400, value=275)
-    seiten = st.number_input("Anzahl Seiten Endprodukt", min_value=4, step=4, value=48)
+    # Eingaben: offenes Endformat
+    format_breite_offen = st.number_input("Format Endprodukt horizontal offen (mm)", min_value=100, max_value=800, value=404)
+    format_hoehe_offen = st.number_input("Format Endprodukt vertikal offen (mm)", min_value=200, max_value=1200, value=550)
+    seiten = st.number_input("Anzahl Seiten offenes Endprodukt", min_value=4, step=4, value=48)
+
+    # Berechnung: gefalztes Halbformat
+    halbformat_breite = format_breite_offen
+    halbformat_hoehe = format_hoehe_offen / 2
+
+    # Tabelle anzeigen
+    daten_halbformat = pd.DataFrame({
+        "Parameter": [
+            "Halbformat Endprodukt horizontal (mm)",
+            "Halbformat Endprodukt vertikal (mm)"
+        ],
+        "Wert": [
+            f"{halbformat_breite:.0f}",
+            f"{halbformat_hoehe:.0f}"
+        ]
+    })
+
+    st.subheader("📰 Gefalztes Halbformat")
+    st.table(daten_halbformat)
 
     # Beschnittabfrage
     beschnitt_aktiv = st.checkbox("Mit Beschnitt rechnen?", value=True)
@@ -38,31 +58,35 @@ if check_password():
     else:
         beschnitt = 0.0
 
-    # Berechnung Rohproduktwerte
-    format1_roh = format_breite + beschnitt
-    format2_roh = format_hoehe + 2 * beschnitt
-    lagen_roh = seiten / 2
+    # 🔢 Berechnung Rohformat-Werte auf Basis des gefalzten Endprodukts
+    format1_roh = halbformat_hoehe + beschnitt  # vertikal + Beschnitt
+    format2_roh = halbformat_breite + beschnitt  # horizontal + Beschnitt
 
-    # Anzeige Rohprodukt
+    # 📄 Anzeige Rohformat
     daten_rohprodukt = pd.DataFrame({
         "Parameter": [
-            "Format Rohprodukt horizontal (mm)",
-            "Format Rohprodukt vertikal (mm)"
+            "Halbformat Rohprodukt horizontal (mm)",
+            "Halbformat Rohprodukt vertikal (mm)",
+            "Rohprodukt offen horizontal (mm)",
+            "Rohprodukt offen vertikal (mm)"
         ],
         "Wert": [
+            format2_roh,
             format1_roh,
-            format2_roh
+            format2_roh,
+            format1_roh * 2
         ]
     })
+
     daten_rohprodukt["Wert"] = daten_rohprodukt["Wert"].apply(
-    lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
+        lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
     ).astype(str)
 
     st.subheader("📄 Rohprodukt")
     st.table(daten_rohprodukt)
 
     # Berechnung Abschnittswerte
-    seiten_abschnitt = seiten / 2
+    seiten_abschnitt = seiten
     stranganzahl = seiten_abschnitt / 2
     bahnbreite_abschnitt = format1_roh * 2
     strangbreite_abschnitt = format2_roh

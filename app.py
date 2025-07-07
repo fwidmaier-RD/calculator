@@ -28,7 +28,7 @@ if check_password():
 
     # Eingaben: Format und Seiten
     format_breite = st.number_input("Format Endprodukt horizontal (mm)", min_value=100, max_value=400, value=202)
-    format_hoehe = st.number_input("Format Rohprodukt vertikal (mm)", min_value=100, max_value=400, value=275)
+    format_hoehe = st.number_input("Format Endprodukt vertikal (mm)", min_value=100, max_value=400, value=275)
     seiten = st.number_input("Anzahl Seiten Endprodukt", min_value=4, step=4, value=48)
 
     # Beschnittabfrage
