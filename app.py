@@ -212,7 +212,7 @@ if check_password():
 
                 varianten.append({
                     "Variante": variant_name,
-                    "Nutzen": nutzen * faktor,
+                    "Nutzen": nutzen,
                     "Stränge": int(anzahl_strang),
                     "theor. Zylinderumfang": f"{int(zylinder)} mm",
                     "Bahnbreite": f"{int(bahnbreite)} mm",
