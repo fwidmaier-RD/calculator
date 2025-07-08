@@ -113,64 +113,44 @@ if check_password():
     st.subheader("📐 Abschnitt")
     st.table(daten_abschnitt)
 
-    # Validierung Abschnitt
+    # 🔍 Validierung der Abschnittswerte (nur Doppelstrang-Produktion)
     st.subheader("✅ Validierung der Abschnittswerte")
 
-    abschnitt_valide = True
-    hinweis_doppelstrang = True
+    abschnitt_valide = False
     doppelstrang_valide = False
 
-    # Validierung Erforderliche Stränge
-    if 2 <= stranganzahl <= 10:
-        st.success("✅ Erforderliche Stränge liegen im zulässigen Bereich (2–10).")
-    elif stranganzahl > 10:
-        if stranganzahl % 2 == 0 or stranganzahl % 3 == 0:
-            if stranganzahl <= 40:
-                st.success("✅ Erforderliche Stränge > 10 sind zulässig (Teilbarkeit durch 2 oder 3 und ≤ 40).")
-            else:
-                st.error("❌ Erforderliche Stränge überschreiten das Maximum von 40.")
-                abschnitt_valide = False
-        else:
-            st.error("❌ Erforderliche Stränge > 10 müssen durch 2 oder 3 teilbar sein.")
-            abschnitt_valide = False
-    else:
-        st.error("❌ Erforderliche Stränge müssen mindestens 2 betragen.")
-        abschnitt_valide = False
-
-    # Zusätzliche Validierung für Doppelstrang-Produktion
-    if ((11 <= stranganzahl <= 16) or
-        (22 <= stranganzahl <= 64 and
-        any(stranganzahl == faktor * anzahl
-            for faktor in [2, 3, 4] for anzahl in range(11, 17)))):
-        hinweis_doppelstrang = True
+    # Regel 1: 2 bis 16 Stränge – immer zulässig
+    if 2 <= stranganzahl <= 16:
         doppelstrang_valide = True
-        st.info("✅ Doppelstrang-Produktion möglich.")
 
+    # Regel 2: 22–64 Stränge – nur wenn Vielfaches von 2, 3 oder 4 × [11–16]
+    elif 22 <= stranganzahl <= 64:
+        for faktor in [2, 3, 4]:
+            for basis in range(11, 17):
+                if stranganzahl == faktor * basis:
+                    doppelstrang_valide = True
+                    break
+
+    # Ergebnis anzeigen
+    if doppelstrang_valide:
+        st.info("✅ Doppelstrang-Produktion möglich.")
+        abschnitt_valide = True
     else:
-        if stranganzahl < 11:
-            st.error("❌ Doppelstrang-Produktion nicht möglich (Weniger als 10 Stränge).")
-        elif 22 <= stranganzahl <= 64:
-            st.error("❌ Doppelstrang-Produktion nicht möglich (Ungültige Anzahl Stränge).")
+        if stranganzahl < 2:
+            st.error("❌ Doppelstrang-Produktion nicht möglich (Weniger als 2 Stränge).")
         elif stranganzahl > 64:
             st.error("❌ Doppelstrang-Produktion nicht möglich (Mehr als 64 Stränge).")
+        else:
+            st.error("❌ Doppelstrang-Produktion nicht möglich (Ungültige Stranganzahl für Doppelstrang-Verfahren).")
 
-    # Prüfung auf alternative Doppelstrang-Produktion, falls klassische Validierung fehlschlägt
-    if not abschnitt_valide and doppelstrang_valide:
-        abschnitt_valide = True
-    elif not abschnitt_valide and not doppelstrang_valide:
-        st.error("❌ Weder klassische noch Doppelstrang-Produktion ist möglich.")
-
-
-
-
-    # Validierung Bahnlänge
+    # Validierung Bahnbreite Abschnitt
     if bahnbreite_abschnitt < 300:
         st.error("❌ Bahnlänge Abschnitt hor ist zu kurz. Mindestwert: 300 mm.")
         abschnitt_valide = False
     else:
         st.success("✅ Bahnlänge Abschnitt hor ist gültig (≥ 300 mm).")
 
-    # Validierung Strangbreite
+    # Validierung Strangbreite Abschnitt
     if strangbreite_abschnitt < 195:
         st.error("❌ Strangbreite Abschnitt vert ist zu schmal. Mindestwert: 195 mm.")
         abschnitt_valide = False
@@ -180,13 +160,14 @@ if check_password():
     else:
         st.success("✅ Strangbreite Abschnitt vert ist gültig (195–400 mm).")
 
-    # Abbruch bei ungültigem Abschnitt
+    # Stop, wenn ungültig
     if not abschnitt_valide:
-        st.warning("❌ Da der Abschnitt nicht valide ist, lässt sich dieses Objekt nicht produzieren. \n\n👉 Bitte passe Deine Angaben an!")
+        st.warning("❌ Da der Abschnitt nicht valide ist, lässt sich dieses Objekt nicht produzieren.\n\n👉 Bitte passe Deine Angaben an!")
         st.stop()
 
 
-    # Drucklegung Variantenprüfung
+
+    # 🔍 Drucklegung – Variantenprüfung
 
     # Vorbereitung: Definition aller Standardvarianten
     varianten_info = [
@@ -202,8 +183,6 @@ if check_password():
     varianten = []
 
     # Schleife für Standard- und Doppelstrangvarianten
-    testwerte = [11, 12, 13, 14, 15, 16]
-
     for name, sammelteiler, umbruch, nutzen, seitenregel in varianten_info:
         for ist_doppelstrang in [False, True]:
             variant_name = f"{name} (Doppelstrang)" if ist_doppelstrang else name
@@ -215,32 +194,32 @@ if check_password():
                 bahnbreite = anzahl_strang * strangbreite_abschnitt * faktor
 
                 status = "✅ Möglich"
-                grund = ""
+                gruende = []
 
-                # Regel für maximale Stranganzahl je nach Variante
+                # Regel: Maximale Stranganzahl
                 if ist_doppelstrang:
                     if anzahl_strang > 16:
                         status = "❌ Nicht möglich"
-                        grund = "Mehr als 16 Stränge (Doppelstrang)"
+                        gruende.append("Mehr als 16 Stränge (Doppelstrang)")
                 else:
                     if anzahl_strang > 10:
                         status = "❌ Nicht möglich"
-                        grund = "Mehr als 10 Stränge"
+                        gruende.append("Mehr als 10 Stränge")
 
                 # Prüfung Zylinderumfang
                 if zylinder < 790 or zylinder > 1530:
                     status = "❌ Nicht möglich"
-                    grund = "Zylinderumfang nicht im zulässigen Bereich"
+                    gruende.append("Zylinderumfang nicht im zulässigen Bereich")
 
                 # Prüfung Bahnbreite
-                elif bahnbreite < 800 or bahnbreite > 2670:
+                if bahnbreite < 800 or bahnbreite > 2670:
                     status = "❌ Nicht möglich"
-                    grund = "Bahnbreite nicht im zulässigen Bereich"
+                    gruende.append("Bahnbreite nicht im zulässigen Bereich")
 
                 # Prüfung Seitenregel
                 if seiten % seitenregel != 0:
                     status = "❌ Nicht möglich"
-                    grund = f"Seitenanzahl nicht durch {seitenregel} teilbar"
+                    gruende.append(f"Seitenanzahl nicht durch {seitenregel} teilbar")
 
                 varianten.append({
                     "Variante": variant_name,
@@ -249,18 +228,21 @@ if check_password():
                     "theor. Zylinderumfang": f"{int(zylinder)} mm",
                     "Bahnbreite": f"{int(bahnbreite)} mm",
                     "Status": status,
-                    "Grund": grund
+                    "Grund": ", ".join(gruende) if gruende else ""
                 })
 
-            except:
+            except Exception as e:
                 continue
 
-    # In DataFrame umwandeln und anzeigen
+    # In DataFrame umwandeln und auf Doppelstrang-Varianten filtern
     df_varianten = pd.DataFrame(varianten)
     df_varianten = df_varianten[["Variante", "Nutzen", "Stränge", "theor. Zylinderumfang", "Bahnbreite", "Status", "Grund"]]
+    df_varianten = df_varianten[df_varianten["Variante"].str.contains("Doppelstrang")]
 
+    # Anzeige der Tabelle
     st.subheader("🔍 Drucklegung – Variantenprüfung")
     st.table(df_varianten)
+
 
 
 
