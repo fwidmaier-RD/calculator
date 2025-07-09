@@ -22,7 +22,7 @@ def check_password():
 if check_password():
 
     # Titel
-    st.title("Drucklegung und Kalkulation Tabloid Produktion V1")
+    st.title("Drucklegung und Kalkulation Doppelnutzen - am kopf zusammenhängend Produktion V1")
 
     # 🧾 Angaben Objekt
     st.subheader("📄 Angaben Objekt")
