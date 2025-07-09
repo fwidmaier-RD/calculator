@@ -216,10 +216,10 @@ if check_password():
                     status = "❌ Nicht möglich"
                     gruende.append("Bahnbreite nicht im zulässigen Bereich")
 
-                # Prüfung Seitenregel
-                if seiten % seitenregel != 0:
+                # Prüfung Seitenregel Doppelstrang neu
+                if seiten % 2 != 0:
                     status = "❌ Nicht möglich"
-                    gruende.append(f"Seitenanzahl nicht durch {seitenregel} teilbar")
+                    gruende.append("Seitenanzahl nicht durch 2 teilbar")
 
                 varianten.append({
                     "Variante": variant_name,
