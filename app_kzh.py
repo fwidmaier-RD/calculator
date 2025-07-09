@@ -86,7 +86,7 @@ if check_password():
         lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
     ).astype(str)
 
-    st.subheader("📐 Abschnitt")
+    st.subheader("✂️ Abschnitt")
     st.table(abschnitt_data)
 
 
@@ -229,6 +229,11 @@ if check_password():
 
     # Eingabefelder für Kalkulation
     auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, format="%d", value=500000)
+    auflage_rechnerisch = auflage / 2
+    st.markdown(f"**Rechnerische Auflage wg. Doppelnutzen:** {auflage_rechnerisch:,.0f}".replace(",", "."))
+
+    # Je nach Bezug mit rechnerischer Auflage rechnen!
+
     papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
     papierqualitaet = st.text_input("Papierqualität (z.\u202fB. LWC, SC, UWF)", value="LWC")
@@ -281,7 +286,7 @@ if check_password():
 
         delta_zyl = zylinder - theor_zyl if isinstance(zylinder, int) else "-"
         papier_roh = (format1_roh / 1000) * (format2_roh / 1000) * (seiten / 2) * (papiergewicht / 1_000_000) * auflage
-        papier_netto = (bahnbreite / 1000) * (zylinder / 1000) * (auflage / nutzen) * (papiergewicht / 1_000_000)
+        papier_netto = (bahnbreite / 1000) * (zylinder / 1000) * (auflage_rechnerisch / nutzen) * (papiergewicht / 1_000_000)
         papier_zuschlag = papier_netto * 0.05 + 1
         papier_summe = papier_netto + papier_zuschlag
         kosten_papier = papier_summe * papierpreis
@@ -299,10 +304,10 @@ if check_password():
 
     # Tabelle generieren und anzeigen
     df_papier = pd.DataFrame(papier_data)
-    st.markdown("#### 📄 Papier")
+    st.markdown("#### 🧻 Papier")
     st.table(df_papier)
 
-    # Neue Tabelle: Farbe
+    # Tabelle Farbe
 
     # 1. Bedruckte Fläche (m²)
     df_farbe = pd.DataFrame(index=["Bedruckte Fläche (m²)", "Farbverbrauch (kg)", "Kosten Farbe (€)"])
@@ -324,7 +329,7 @@ if check_password():
     st.markdown("#### 🎨 Farbe")
     st.table(df_farbe)
 
-    # Neue Tabelle Maschine: Nur für gültige Varianten
+    # Tabelle Maschine
     maschinen_data = {}
 
     for index, row in df_gueltig.iterrows():
@@ -333,7 +338,7 @@ if check_password():
         zylinder = naechster_zylinder(row["theor. Zylinderumfang"])
 
         # Berechnungen
-        umdrehungen = auflage / nutzen
+        umdrehungen = auflage_rechnerisch / nutzen
         geschwindigkeit = (bahngeschwindigkeit * 1_000_000) / zylinder
         maschinenstunden_netto = umdrehungen / geschwindigkeit
         ruesten = 3
@@ -350,7 +355,7 @@ if check_password():
         }
 
     # Tabelle anzeigen
-    st.markdown("#### 💡 Maschine")
+    st.markdown("#### ⚙️ Maschine")
     df_maschine = pd.DataFrame(maschinen_data)
     st.table(df_maschine)
 
@@ -386,5 +391,5 @@ if check_password():
     # Falls erfolgreich, als DataFrame anzeigen
     if kosten_data:
         df_kosten = pd.DataFrame(kosten_data)
-        st.markdown("#### € Kosten")
+        st.markdown("#### 🪙 Kosten")
         st.table(df_kosten)
