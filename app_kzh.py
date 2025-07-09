@@ -24,32 +24,13 @@ if check_password():
     # Titel
     st.title("Drucklegung und Kalkulation Doppelnutzen - am kopf zusammenhängend Produktion V1")
 
-    # 🧾 Angaben Objekt
-    st.subheader("📄 Angaben Objekt")
+   
+    # Eingaben Objekt
+    st.subheader("📋 Angaben Objekt")
 
-    # Eingaben: offenes Endformat
-    format_breite_offen = st.number_input("Format Endprodukt horizontal offen (mm)", min_value=100, max_value=800, value=404)
-    format_hoehe_offen = st.number_input("Format Endprodukt vertikal offen (mm)", min_value=200, max_value=1200, value=550)
-    seiten = st.number_input("Anzahl Seiten offenes Endprodukt", min_value=4, step=4, value=48)
-
-    # Berechnung: gefalztes Halbformat
-    halbformat_breite = format_breite_offen
-    halbformat_hoehe = format_hoehe_offen / 2
-
-    # Tabelle anzeigen
-    daten_halbformat = pd.DataFrame({
-        "Parameter": [
-            "Halbformat Endprodukt horizontal (mm)",
-            "Halbformat Endprodukt vertikal (mm)"
-        ],
-        "Wert": [
-            f"{halbformat_breite:.0f}",
-            f"{halbformat_hoehe:.0f}"
-        ]
-    })
-
-    st.subheader("📰 Gefalztes Halbformat")
-    st.table(daten_halbformat)
+    format_breite = st.number_input("Format Endprodukt horizontal (mm)", min_value=100, max_value=600, value=200)
+    format_hoehe = st.number_input("Format Endprodukt vertikal (mm)", min_value=100, max_value=600, value=250)
+    seiten = st.number_input("Anzahl Seiten Endprodukt", min_value=4, step=4, value=48)
 
     # Beschnittabfrage
     beschnitt_aktiv = st.checkbox("Mit Beschnitt rechnen?", value=True)
@@ -58,45 +39,41 @@ if check_password():
     else:
         beschnitt = 0.0
 
-    # 🔢 Berechnung Rohformat-Werte auf Basis des gefalzten Endprodukts
-    format1_roh = halbformat_hoehe + beschnitt  # vertikal + Beschnitt
-    format2_roh = halbformat_breite + beschnitt  # horizontal + Beschnitt
+    # Berechnung Rohproduktwerte
+    format1_roh = format_breite + beschnitt 
+    format2_roh = format_hoehe + 2 * beschnitt
+    lagen_roh = seiten / 2
 
-    # 📄 Anzeige Rohformat
-    daten_rohprodukt = pd.DataFrame({
+    # Anzeige Rohprodukt
+    rohprodukt_data = pd.DataFrame({
         "Parameter": [
-            "Halbformat Rohprodukt horizontal (mm)",
-            "Halbformat Rohprodukt vertikal (mm)",
-            "Rohprodukt offen horizontal (mm)",
-            "Rohprodukt offen vertikal (mm)"
+            "Rohformat horizontal (mm)",
+            "Rohformat vertikal (mm)"
         ],
         "Wert": [
-            format2_roh,
             format1_roh,
-            format2_roh,
-            format1_roh * 2
+            format2_roh
         ]
     })
-
-    daten_rohprodukt["Wert"] = daten_rohprodukt["Wert"].apply(
+    rohprodukt_data["Wert"] = rohprodukt_data["Wert"].apply(
         lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
     ).astype(str)
 
     st.subheader("📄 Rohprodukt")
-    st.table(daten_rohprodukt)
+    st.table(rohprodukt_data)
 
     # Berechnung Abschnittswerte
     seiten_abschnitt = seiten
     stranganzahl = seiten_abschnitt / 2
-    bahnbreite_abschnitt = format1_roh * 2
-    strangbreite_abschnitt = format2_roh
+    bahnbreite_abschnitt = format2_roh * 2
+    strangbreite_abschnitt = format1_roh
 
-    daten_abschnitt = pd.DataFrame({
+    abschnitt_data = pd.DataFrame({
         "Parameter": [
             "Seiten Abschnitt",
             "Erforderliche Stränge",
-            "Bahnlänge Abschnitt hor",
-            "Strangbreite Abschnitt vert"
+            "Bahnlänge Abschnitt Doppelnutzen hor (mm)",
+            "Strangbreite Abschnitt Doppelnutzen vert (mm)"
         ],
         "Wert": [
             seiten_abschnitt,
@@ -105,13 +82,14 @@ if check_password():
             strangbreite_abschnitt
         ]
     })
-    daten_abschnitt["Wert"] = daten_abschnitt["Wert"].apply(
-    lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
+    abschnitt_data["Wert"] = abschnitt_data["Wert"].apply(
+        lambda v: f"{v:.0f}" if v == int(v) else f"{v:.2f}"
     ).astype(str)
 
-
     st.subheader("📐 Abschnitt")
-    st.table(daten_abschnitt)
+    st.table(abschnitt_data)
+
+
 
     # 🔍 Validierung der Abschnittswerte (nur Doppelstrang-Produktion)
     st.subheader("✅ Validierung der Abschnittswerte")
