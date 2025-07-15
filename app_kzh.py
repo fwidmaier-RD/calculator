@@ -35,7 +35,7 @@ if check_password():
     # Beschnittabfrage
     beschnitt_aktiv = st.checkbox("Mit Beschnitt rechnen?", value=True)
     if beschnitt_aktiv:
-        beschnitt = st.number_input("Beschnitt je Seite (mm)", min_value=0.0, max_value=10.0, value=2.0, step=0.5)
+        beschnitt = st.number_input("Beschnitt je Seite (mm)", min_value=0.0, max_value=10.0, value=3.0, step=0.5)
         if beschnitt < 3.0:
             st.warning("⚠️ Der Beschnitt ist für diese Produktionsart zu klein (mindestens 3 mm empfohlen).")
     else:
@@ -93,13 +93,11 @@ if check_password():
     st.table(abschnitt_data)
 
 
-    # Infobox Doppelnutzen-Produktion
-    st.info("Bitte beachten: Je Abschnitt werden 2 Nutzen erzeugt.\nDie Anzahl Nutzen in der folgenden Tabelle bezieht sich auf den Abschnitt und nicht auf das Endprodukt.")
-
 
 
     # 🔍 Validierung der Abschnittswerte (nur Doppelstrang-Produktion)
     st.subheader("✅ Validierung der Abschnittswerte")
+
 
     abschnitt_valide = False
     doppelstrang_valide = False
@@ -115,10 +113,10 @@ if check_password():
                 if stranganzahl == faktor * basis:
                     doppelstrang_valide = True
                     break
-
+    
     # Ergebnis anzeigen
     if doppelstrang_valide:
-        st.info("✅ Doppelstrang-Produktion möglich.")
+        st.success("✅ Doppelstrang-Produktion möglich.")
         abschnitt_valide = True
     else:
         if stranganzahl < 2:
@@ -137,8 +135,7 @@ if check_password():
 
     # Validierung Strangbreite Abschnitt
     if strangbreite_abschnitt < 195:
-        st.error("❌ Strangbreite Abschnitt vert ist zu schmal. Mindestwert: 195 mm.")
-        abschnitt_valide = False
+        st.warning("⚠️ Strangbreite unter 195 mm – Machbarkeit muss technisch geprüft werden!")
     elif strangbreite_abschnitt > 400:
         st.error("❌ Strangbreite Abschnitt vert ist zu breit. Maximalwert: 400 mm.")
         abschnitt_valide = False
@@ -226,6 +223,10 @@ if check_password():
 
     # Anzeige der Tabelle
     st.subheader("🔍 Drucklegung – Variantenprüfung")
+    
+    # Infobox Doppelnutzen-Produktion
+    st.info("ℹ️ Je Abschnitt werden 2 Nutzen erzeugt.\nDie Anzahl Nutzen in der folgenden Tabelle bezieht sich auf den Abschnitt und nicht auf das Endprodukt.")               
+    
     st.table(df_varianten)
 
 
