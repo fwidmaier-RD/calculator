@@ -93,6 +93,10 @@ if check_password():
     st.table(abschnitt_data)
 
 
+    # Infobox Doppelnutzen-Produktion
+    st.info("Bitte beachten: Je Abschnitt werden 2 Nutzen erzeugt.\nDie Anzahl Nutzen in der folgenden Tabelle bezieht sich auf den Abschnitt und nicht auf das Endprodukt.")
+
+
 
     # 🔍 Validierung der Abschnittswerte (nur Doppelstrang-Produktion)
     st.subheader("✅ Validierung der Abschnittswerte")
@@ -233,7 +237,7 @@ if check_password():
     # Eingabefelder für Kalkulation
     auflage = st.number_input("Auflage (Stück)", min_value=1000, step=1000, format="%d", value=500000)
     auflage_rechnerisch = auflage / 2
-    st.markdown(f"**Rechnerische Auflage wg. Doppelnutzen:** {auflage_rechnerisch:,.0f}".replace(",", "."))
+    st.markdown(f"**Benötigte Anzahl Abschnitte wg. Doppelnutzen:** {auflage_rechnerisch:,.0f}".replace(",", "."))
 
     # Je nach Bezug mit rechnerischer Auflage rechnen!
     # Da wir im Doppelnutzen arbeiten, reicht die halbe Auflage zur Produktion
