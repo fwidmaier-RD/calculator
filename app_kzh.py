@@ -36,8 +36,11 @@ if check_password():
     beschnitt_aktiv = st.checkbox("Mit Beschnitt rechnen?", value=True)
     if beschnitt_aktiv:
         beschnitt = st.number_input("Beschnitt je Seite (mm)", min_value=0.0, max_value=10.0, value=2.0, step=0.5)
+        if beschnitt < 3.0:
+            st.warning("⚠️ Der Beschnitt ist für diese Produktionsart zu klein (mindestens 3 mm empfohlen).")
     else:
         beschnitt = 0.0
+        format_hoehe += 3  # automatische Erhöhung bei Produktion ohne Beschnitt
 
     # Berechnung Rohproduktwerte
     format1_roh = format_breite + beschnitt 
@@ -233,6 +236,8 @@ if check_password():
     st.markdown(f"**Rechnerische Auflage wg. Doppelnutzen:** {auflage_rechnerisch:,.0f}".replace(",", "."))
 
     # Je nach Bezug mit rechnerischer Auflage rechnen!
+    # Da wir im Doppelnutzen arbeiten, reicht die halbe Auflage zur Produktion
+
 
     papierpreis = st.number_input("Preis Papier (€/t)", min_value=0.0, value=600.0, step=10.0)
     papiergewicht = st.number_input("Papiergewicht (g/m²)", min_value=30.0, max_value=150.0, value=42.0, step=0.5)
