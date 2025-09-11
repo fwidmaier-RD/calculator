@@ -1,6 +1,11 @@
 import streamlit as st
 import pandas as pd
 
+#Import JSON und OS für künftige Anwendungen
+import json
+import os
+
+
 def check_password():
     def password_entered():
         if st.session_state["password"] == "leiste-mart-lohn-hortense":
