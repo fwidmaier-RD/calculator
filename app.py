@@ -5,6 +5,17 @@ import pandas as pd
 import json
 import os
 
+# JSON-Datei mit Zylinderformaten laden
+def lade_zylinderformate(pfad="zylinderformate.json"):
+    try:
+        with open(pfad, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        st.error(f"Fehler beim Laden der Zylinderformate: {e}")
+        return {}
+
+zylinder_data = lade_zylinderformate()
+
 
 def check_password():
     def password_entered():
@@ -277,9 +288,11 @@ if check_password():
 
     # Nur gültige Varianten übernehmen
     df_gueltig = df_varianten[df_varianten["Status"] == "✅ Möglich"].copy()
+    
 
-    # Liste der zulässigen Zylinderumfänge
-    zylinder_umfaenge = [790, 800, 820, 840, 860, 880, 940, 980, 1040, 1200, 1530]
+    # Alle Zylinderformate aus der JSON-Datei extrahieren und sortieren
+    zylinder_umfaenge = sorted({z for maschine in zylinder_data.values() for z in maschine})
+
 
     # Funktion zur Ermittlung des passenden Zylinders
     def naechster_zylinder(theor_umfang):
