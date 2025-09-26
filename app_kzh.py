@@ -300,6 +300,10 @@ if check_password():
             if z >= theor_wert:
                 return z
         return "-"
+    
+    # Funktion: Maschinen finden, die den Zylinderumfang unterstützen
+    def finde_maschinen_fuer_zylinder(zyl_umfang):
+        return [maschine for maschine, formate in zylinder_data.items() if zyl_umfang in formate]
 
 
     # Tabelle Papier
@@ -374,6 +378,7 @@ if check_password():
         kosten_maschine = maschinenstunden_brutto * maschinenpreis
 
         maschinen_data[variante] = {
+            "Mögliche Maschinen": ", ".join(finde_maschinen_fuer_zylinder(zylinder)),
             "Umdrehungen": f"{umdrehungen:,.0f}".replace(",", "."),
             "Geschwindigkeit (u/h)": f"{geschwindigkeit:,.0f}".replace(",", "."),
             "Maschinenstunden Netto": f"{maschinenstunden_netto:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
